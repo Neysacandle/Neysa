@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neysa Candle - Handcrafted Luxury</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<style>
+    .font-playfair { font-family: 'Playfair Display', serif; }
+    .font-poppins { font-family: 'Poppins', sans-serif; }
+    .bg-overlay {
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+                    url('https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80');
+        background-size: cover;
+        background-position: center;
+    }
+</style>
+<body class="font-poppins">
+    <div id="app">
+        <nav class="bg-white shadow-lg fixed w-full z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <h1 class="font-playfair text-2xl font-bold">Neysa Candle</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <a href="#products" class="text-gray-700 hover:text-gray-900">Products</a>
+                        <a href="#about" class="text-gray-700 hover:text-gray-900">About</a>
+                        <a href="https://wa.me/919990700537" class="text-gray-700 hover:text-gray-900">Join Community</a>
+                        <button @click="toggleCart" class="relative">
+                            <i class="bi bi-cart text-xl"></i>
+                            <span v-if="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">{{cartCount}}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="bg-overlay h-screen flex items-center justify-center text-white">
+            <div class="text-center">
+                <h1 class="font-playfair text-5xl md:text-7xl mb-4">Handcrafted Luxury</h1>
+                <p class="text-xl mb-8">Experience the art of fine candle making</p>
+                <a href="#products" class="bg-white text-gray-900 px-8 py-3 rounded-full hover:bg-gray-100 transition">Shop Now</a>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <section id="products" class="py-16 px-4">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="font-playfair text-3xl mb-12 text-center">Our Collections</h2>
+                
+                <!-- Product Categories -->
+                <div class="grid md:grid-cols-2 gap-8 mb-16">
+                    <div @click="currentCategory = 'candles'" 
+                         class="cursor-pointer p-8 rounded-lg shadow-lg text-center"
+                         :class="{'bg-gray-100': currentCategory === 'candles'}">
+                        <h3 class="font-playfair text-2xl mb-4">Scented Candles</h3>
+                        <p>Available in Small, Medium, Large & Trinket Jars</p>
+                    </div>
+                    <div @click="currentCategory = 'melts'"
+                         class="cursor-pointer p-8 rounded-lg shadow-lg text-center"
+                         :class="{'bg-gray-100': currentCategory === 'melts'}">
+                        <h3 class="font-playfair text-2xl mb-4">Scented Wax Melts</h3>
+                        <p>Perfect for your wax warmer</p>
+                    </div>
+                </div>
+
+                <!-- Product Grid -->
+                <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div v-for="product in filteredProducts" :key="product.id" class="border rounded-lg p-4">
+                        <img :src="product.image" class="w-full h-48 object-cover rounded-lg mb-4">
+                        <h3 class="font-playfair text-xl mb-2">{{product.name}}</h3>
+                        <p class="text-gray-600 mb-2">{{product.description}}</p>
+                        <div class="flex justify-between items-center">
+                            <select v-if="currentCategory === 'candles'" v-model="product.selectedSize" class="border rounded p-1">
+                                <option v-for="size in product.sizes" :value="size">{{size.name}} - ₹{{size.price}}</option>
+                            </select>
+                            <p v-else class="font-semibold">₹{{product.price}}</p>
+                            <button @click="addToCart(product)" class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cart Sidebar -->
+        <div v-if="showCart" class="fixed right-0 top-0 h-full w-full md:w-96 bg-white shadow-lg z-50 p-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="font-playfair text-2xl">Your Cart</h2>
+                <button @click="toggleCart"><i class="bi bi-x text-2xl"></i></button>
+            </div>
+            <div v-if="cart.length === 0" class="text-center text-gray-500">
+                Your cart is empty
+            </div>
+            <div v-else>
+                <div v-for="item in cart" :key="item.id" class="border-b py-4">
+                    <div class="flex justify-between">
+                        <div>
+                            <h3 class="font-semibold">{{item.name}}</h3>
+                            <p class="text-sm text-gray-600">{{item.size ? item.size.name : ''}}</p>
+                        </div>
+                        <div class="text-right">
+                            <p>₹{{item.size ? item.size.price : item.price}}</p>
+                            <button @click="removeFromCart(item)" class="text-red-500 text-sm">Remove</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between font-semibold mb-4">
+                        <span>Total:</span>
+                        <span>₹{{cartTotal}}</span>
+                    </div>
+                    <button @click="checkout" class="w-full bg-gray-900 text-white py-3 rounded">Proceed to Checkout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <section id="about" class="bg-gray-100 py-16 px-4">
+            <div class="max-w-3xl mx-auto text-center">
+                <h2 class="font-playfair text-3xl mb-6">Our Story</h2>
+                <p class="text-gray-600 mb-8">
+                    At Neysa Candle, we pour our heart into crafting premium handmade candles. Each piece is carefully created to bring warmth and luxury to your space.
+                </p>
+                <a href="https://wa.me/919990700537" class="inline-flex items-center bg-gray-900 text-white px-6 py-3 rounded-full hover:bg-gray-800">
+                    <i class="bi bi-whatsapp mr-2"></i>
+                    Join our Community
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-gray-900 text-white py-8 px-4">
+            <div class="max-w-7xl mx-auto text-center">
+                <p class="mb-4">Contact: R.Anand, Delhi</p>
+                <p>© 2023 Neysa Candle. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    currentCategory: 'candles',
+                    showCart: false,
+                    cart: [],
+                    fragrances: [
+                        { id: 1, name: 'Lavender', description: 'Calming and soothing', image: 'https://images.unsplash.com/photo-1602874801007-bd458bb1b8b6?auto=format&fit=crop&q=80' },
+                        { id: 2, name: 'Vanilla', description: 'Warm and comforting', image: 'https://images.unsplash.com/photo-1608376630927-32487eff7960?auto=format&fit=crop&q=80' },
+                        { id: 3, name: 'Citrus', description: 'Bright and energizing', image: 'https://images.unsplash.com/photo-1639501295122-28c362f2a571?auto=format&fit=crop&q=80' },
+                        { id: 4, name: 'Rose', description: 'Romantic and floral', image: 'https://images.unsplash.com/photo-1596433809195-847f78d05845?auto=format&fit=crop&q=80' },
+                        { id: 5, name: 'Eucalyptus', description: 'Refreshing and invigorating', image: 'https://images.unsplash.com/photo-1608376630927-32487eff7960?auto=format&fit=crop&q=80' },
+                        { id: 6, name: 'Sandalwood', description: 'Earthy and woody', image: 'https://images.unsplash.com/photo-1602874801007-bd458bb1b8b6?auto=format&fit=crop&q=80' },
+                        { id: 7, name: 'Cinnamon', description: 'Spicy and warm', image: 'https://images.unsplash.com/photo-1639501295122-28c362f2a571?auto=format&fit=crop&q=80' },
+                        { id: 8, name: 'Ocean Breeze', description: 'Clean and airy', image: 'https://images.unsplash.com/photo-1596433809195-847f78d05845?auto=format&fit=crop&q=80' },
+                        { id: 9, name: 'Jasmine', description: 'Sweet and exotic', image: 'https://images.unsplash.com/photo-1602874801007-bd458bb1b8b6?auto=format&fit=crop&q=80' },
+                        { id: 10, name: 'Cedarwood', description: 'Woody and masculine', image: 'https://images.unsplash.com/photo-1608376630927-32487eff7960?auto=format&fit=crop&q=80' },
+                    ]
+                }
+            },
+            computed: {
+                filteredProducts() {
+                    return this.fragrances.map(f => ({
+                        ...f,
+                        sizes: [
+                            { name: 'Small', price: 299 },
+                            { name: 'Medium', price: 499 },
+                            { name: 'Large', price: 699 },
+                            { name: 'Trinket', price: 199 }
+                        ],
+                        selectedSize: { name: 'Small', price: 299 },
+                        price: 199 // for wax melts
+                    }))
+                },
+                cartCount() {
+                    return this.cart.length
+                },
+                cartTotal() {
+                    return this.cart.reduce((total, item) => {
+                        return total + (item.size ? item.size.price : item.price)
+                    }, 0)
+                }
+            },
+            methods: {
+                toggleCart() {
+                    this.showCart = !this.showCart
+                },
+                addToCart(product) {
+                    const cartItem = {
+                        id: Date.now(),
+                        name: product.name,
+                        size: this.currentCategory === 'candles' ? product.selectedSize : null,
+                        price: this.currentCategory === 'melts' ? product.price : null
+                    }
+                    this.cart.push(cartItem)
+                },
+                removeFromCart(item) {
+                    const index = this.cart.findIndex(i => i.id === item.id)
+                    if (index > -1) {
+                        this.cart.splice(index, 1)
+                    }
+                },
+                checkout() {
+                    const items = this.cart.map(item => 
+                        `${item.name} ${item.size ? `(${item.size.name})` : ''}: ₹${item.size ? item.size.price : item.price}`
+                    ).join('\n')
+                    const message = `New Order:\n${items}\n\nTotal: ₹${this.cartTotal}`
+                    window.open(`https://wa.me/919990700537?text=${encodeURIComponent(message)}`, '_blank')
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
